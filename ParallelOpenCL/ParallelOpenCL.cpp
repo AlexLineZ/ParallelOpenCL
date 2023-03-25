@@ -31,21 +31,20 @@ unsigned char* negativeFilterWithOpenCL(unsigned char* image, int width, int hei
 
     unsigned char* newImage = image;
 
-    cl_int ret;
     cl_uint retNumPlatforms, retNumDevices;
     cl_platform_id platformID;
     cl_device_id deviceID;
 
-    ret = clGetPlatformIDs(1, &platformID, &retNumPlatforms);/* получить доступные платформы */
+    cl_int ret = clGetPlatformIDs(1, &platformID, &retNumPlatforms);/* получить доступные платформы */
     ret = clGetDeviceIDs(platformID, CL_DEVICE_TYPE_DEFAULT, 1, &deviceID, &retNumDevices); /* получить доступные устройства */
     cl_context context = clCreateContext(NULL, retNumDevices, &deviceID, NULL, NULL, &ret); /* создать контекст */
-    cl_command_queue commandQueue = clCreateCommandQueueWithProperties(context, deviceID, NULL, &ret); /* создаем команду */
+    cl_command_queue commandQueue = clCreateCommandQueueWithProperties(context, deviceID, NULL, &ret); /* создаем очередь команд */
     cl_mem imageBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned char) * 3 * width * height, NULL, &ret);
 
     cl_kernel kernel = formatKernel("negativeKernel.cl", "negativeFilter", context, deviceID, ret);
 
-    ret = clEnqueueWriteBuffer(commandQueue, imageBuffer, CL_TRUE, 0, sizeof(unsigned char) * 3 * width * height, newImage, 0, NULL, NULL);
-    ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &imageBuffer);
+    ret = clEnqueueWriteBuffer(commandQueue, imageBuffer, CL_TRUE, 0, sizeof(unsigned char) * 3 * width * height, newImage, 0, NULL, NULL);/* записать данные в буфер */
+    ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &imageBuffer); /* устанавливаем параметр */
 
     size_t globalWorkSize[1] = { 3 * width * height };
     ret = clEnqueueNDRangeKernel(commandQueue, kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
@@ -61,12 +60,11 @@ unsigned char* gaussianBlurWithOpenCL(unsigned char* image, int width, int heigh
 
     int info[] = { width, height, countChannel, kernelSize };
 
-    cl_int ret;
     cl_uint retNumPlatforms, retNumDevices;
     cl_platform_id platformID;
     cl_device_id deviceID;
 
-    ret = clGetPlatformIDs(1, &platformID, &retNumPlatforms);
+    cl_int ret = clGetPlatformIDs(1, &platformID, &retNumPlatforms);
     ret = clGetDeviceIDs(platformID, CL_DEVICE_TYPE_GPU, 1, &deviceID, &retNumDevices);
     cl_context context = clCreateContext(NULL, retNumDevices, &deviceID, NULL, NULL, &ret);
     cl_command_queue commandQueue = clCreateCommandQueueWithProperties(context, deviceID, NULL, &ret);
